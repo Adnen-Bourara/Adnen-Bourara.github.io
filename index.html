@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Test de Rôles en Équipe - Belbin</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    input[type=number]::-webkit-inner-spin-button, 
+    input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+    input[type=number] { -moz-appearance: textfield; }
+  </style>
+</head>
+<body class="bg-slate-100 text-slate-800 min-h-screen">
+
+  <header class="bg-slate-900 text-white py-8 shadow-lg mb-8 border-b border-indigo-500/30">
+    <div class="max-w-4xl mx-auto px-4">
+      <span class="inline-block bg-indigo-500/20 text-indigo-300 text-xs font-bold uppercase tracking-widest px-3 py-1 rounded-full mb-3 border border-indigo-400/30">Test de Personnalité Équipe</span>
+      <h1 class="text-3xl md:text-4xl font-extrabold tracking-tight">Inventaire Belbin des Rôles en Équipe</h1>
+      <p class="mt-2 text-slate-300 text-sm md:text-base max-w-2xl leading-relaxed">
+        Évaluez chaque énoncé en attribuant une note de <span class="text-amber-400 font-bold">0 à 10</span> selon votre degré d'accord (8 énoncés par section, soit max 80 points par section).
+      </p>
+    </div>
+  </header>
+
+  <main class="max-w-4xl mx-auto px-4 pb-20">
+    <!-- Questionnaire Container -->
+    <form id="belbinForm" class="space-y-10">
+      <div id="sectionsContainer" class="space-y-10"></div>
+
+      <div class="flex justify-end pt-6">
+        <button type="submit" id="calculateBtn" class="w-full md:w-auto bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white font-bold text-base px-10 py-4 rounded-xl shadow-lg shadow-indigo-600/30 transition-all cursor-pointer flex items-center justify-center gap-2">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+          Générer / Recalculer mon profil Belbin
+        </button>
+      </div>
+    </form>
+
+    <!-- Results Container -->
+    <div id="resultsCard" class="hidden bg-white rounded-2xl shadow-xl border border-slate-200/80 p-6 md:p-8 mt-14 space-y-10">
+      <div class="border-b border-slate-200 pb-4 flex justify-between items-center flex-wrap gap-2">
+        <h2 class="text-2xl font-extrabold text-slate-900">Votre Profil d'Équipe Belbin</h2>
+      </div>
+
+      <!-- 1. Top Roles Highlights -->
+      <div>
+        <h3 class="text-sm font-bold uppercase tracking-wider text-slate-500 mb-3">Vos Rôles Dominants</h3>
+        <div id="topRolesContainer" class="grid grid-cols-1 md:grid-cols-3 gap-4"></div>
+      </div>
+
+      <!-- 2. Full Scores Table -->
+      <div>
+        <h3 class="text-base font-bold mb-3 text-slate-800">Détail complet des scores par rôle</h3>
+        <div class="overflow-x-auto rounded-xl border border-slate-200">
+          <table class="w-full text-left border-collapse text-sm">
+            <thead>
+              <tr class="bg-slate-100 text-slate-700 font-bold border-b border-slate-200">
+                <th class="p-3 w-16 text-center">Rang</th>
+                <th class="p-3">Rôle Belbin</th>
+                <th class="p-3 text-right">Score Total</th>
+              </tr>
+            </thead>
+            <tbody id="scoresTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- 3. Visualizations (Webchart Radar & Bar Chart) -->
+      <div class="space-y-8 pt-4 border-t border-slate-200">
+        <h3 class="text-base font-bold text-slate-800">Représentations Graphiques des Rôles</h3>
+        
+        <!-- Radar Chart Container -->
+        <div class="bg-slate-50/80 p-6 rounded-2xl border border-slate-200 shadow-inner">
+          <div class="relative w-full h-[480px] flex items-center justify-center">
+            <canvas id="radarChart"></canvas>
+          </div>
+        </div>
+
+        <!-- Bar Chart Container -->
+        <div class="bg-slate-50/80 p-6 rounded-2xl border border-slate-200 shadow-inner">
+          <div class="relative w-full h-[380px]">
+            <canvas id="barChart"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- 4. Histogram — Répartition des scores (items) (Placed under Bar Chart and Radar) -->
+      <div class="space-y-4 pt-6 border-t border-slate-200">
+        <h3 class="text-base font-bold text-slate-800">Histogramme — Répartition des scores</h3>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 items-center">
+          <div class="overflow-x-auto rounded-xl border border-slate-200">
+            <table class="w-full text-left border-collapse text-sm">
+              <thead>
+                <tr class="bg-slate-100 text-slate-700 font-bold border-b border-slate-200">
+                  <th class="p-2.5">Intervalle</th>
+                  <th class="p-2.5 text-right">Nombre d'items</th>
+                </tr>
+              </thead>
+              <tbody id="histogramTableBody"></tbody>
+            </table>
+          </div>
+          <div class="md:col-span-2 bg-slate-50/80 p-4 rounded-xl border border-slate-200">
+            <div class="relative w-full h-52">
+              <canvas id="histogramChart"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 5. Definitions of Roles -->
+      <div class="pt-6 border-t border-slate-200 space-y-3">
+        <h3 class="text-base font-bold text-slate-800">Définitions des Rôles Belbin</h3>
+        <ul class="space-y-2 text-sm text-slate-700 bg-slate-50 p-5 rounded-xl border border-slate-200">
+          <li><strong class="text-slate-900">Plant (Innovateur / Créatif)</strong> – Génère des idées originales, résout des problèmes complexes.</li>
+          <li><strong class="text-slate-900">Resource Investigator (Investigateur de ressources)</strong> – Enthousiaste, explore opportunités, établit des contacts.</li>
+          <li><strong class="text-slate-900">Co-ordinator / Coordinator (Coordinateur)</strong> – Calme, mature, sait déléguer et clarifier les objectifs.</li>
+          <li><strong class="text-slate-900">Shaper (Propulseur / Façonneur)</strong> – Dynamique, pousse l'équipe à avancer, aime relever les défis.</li>
+          <li><strong class="text-slate-900">Monitor Evaluator (Évaluateur / Analyste)</strong> – Stratégique, objectif, bon juge, prend du recul.</li>
+          <li><strong class="text-slate-900">Teamworker (Soutien / Cohésif)</strong> – Diplomate, coopératif, attentif aux relations, prévient les conflits.</li>
+          <li><strong class="text-slate-900">Implementer (Organisateur / Réalisateur)</strong> – Pratique, discipliné, transforme les idées en actions.</li>
+          <li><strong class="text-slate-900">Completer-Finisher (Perfectionniste / Acheveur)</strong> – Soucieux du détail, garantit qualité et respect des délais.</li>
+          <li><strong class="text-slate-900">Specialist (Spécialiste)</strong> – Apporte expertise pointue et connaissances rares.</li>
+        </ul>
+      </div>
+
+    </div>
+  </main>
+
+  <script>
+    const questions = [
+      { id: "1a", section: 1, text: "Je remarque rapidement de nouvelles opportunités et j’en fais bon usage", role: "Resource Investigator" },
+      { id: "1b", section: 1, text: "Je peux travailler efficacement avec tout type de personne", role: "Teamworker" },
+      { id: "1c", section: 1, text: "La production d’idées est un de mes dons naturels", role: "Plant" },
+      { id: "1d", section: 1, text: "Je parviens infailliblement à signaler la personne qui présente une qualité utile au groupe", role: "Co-ordinator" },
+      { id: "1e", section: 1, text: "Etant efficace moi-même, je vais toujours jusqu’au bout des choses", role: "Implementer" },
+      { id: "1f", section: 1, text: "Cela ne me dérange pas d’être moins populaire... si j’obtiens de bons résultats", role: "Shaper" },
+      { id: "1g", section: 1, text: "Je sens rapidement ce qui fonctionne dans une situation que je connais bien", role: "Specialist" },
+      { id: "1h", section: 1, text: "Je peux raisonner objectivement et aborder un sujet sans préjugés", role: "Monitor Evaluator" },
+
+      { id: "2a", section: 2, text: "Je me sens seulement à l’aise quand les réunions sont bien structurées, bien dirigées", role: "Implementer" },
+      { id: "2b", section: 2, text: "Je donne trop la parole aux membres qui ont des idées valables", role: "Teamworker" },
+      { id: "2c", section: 2, text: "J’ai tendance à parler beaucoup quand on discute de nouvelles idées", role: "Plant" },
+      { id: "2d", section: 2, text: "À cause de mon regard objectif, je trouve difficile de parler avec enthousiasme", role: "Monitor Evaluator" },
+      { id: "2e", section: 2, text: "On me trouve parfois dominant et autoritaire quand les choses doivent avancer", role: "Shaper" },
+      { id: "2f", section: 2, text: "Je trouve difficile de prendre le devant, peut-être parce que je suis trop sensible à l’ambiance", role: "Teamworker" },
+      { id: "2g", section: 2, text: "Je suis parfois tellement plongé dans mes idées que je ne suis plus le déroulement", role: "Plant" },
+      { id: "2h", section: 2, text: "Mes collègues trouvent que je m’attarde trop sur les détails et que je pense trop à ce qui pourrait tourner mal", role: "Completer-Finisher" },
+
+      { id: "3a", section: 3, text: "Je peux influencer les autres sans pour autant les mettre sous pression", role: "Co-ordinator" },
+      { id: "3b", section: 3, text: "Ma vigilance nous préserve des fautes et des oublis", role: "Completer-Finisher" },
+      { id: "3c", section: 3, text: "J’incite à l’action pour éviter toute perte de temps", role: "Shaper" },
+      { id: "3d", section: 3, text: "On peut compter sur le fait que j’apporte toujours une idée originale", role: "Plant" },
+      { id: "3e", section: 3, text: "Je suis toujours prêt à soutenir une bonne proposition", role: "Teamworker" },
+      { id: "3f", section: 3, text: "Je suis constamment à la recherche de nouvelles idées et des derniers développements", role: "Resource Investigator" },
+      { id: "3g", section: 3, text: "Ma capacité de juger objectivement est appréciée", role: "Monitor Evaluator" },
+      { id: "3h", section: 3, text: "On peut me faire confiance que tout le nécessaire soit organisé", role: "Implementer" },
+
+      { id: "4a", section: 4, text: "J’y participe volontiers pour apprendre à mieux connaître mes collègues", role: "Teamworker" },
+      { id: "4b", section: 4, text: "Je n’hésite pas à attaquer les conceptions des autres, voire à me joindre au point de vue d’une minorité", role: "Monitor Evaluator" },
+      { id: "4c", section: 4, text: "Je trouve facilement les arguments pour réfuter un raisonnement incohérent", role: "Monitor Evaluator" },
+      { id: "4d", section: 4, text: "Je pense être capable de veiller à la réussite d’un plan dès que son application a été décidée", role: "Implementer" },
+      { id: "4e", section: 4, text: "J’ai tendance à éviter les remarques trop évidentes et à apporter des idées inattendues", role: "Plant" },
+      { id: "4f", section: 4, text: "J’aspire au perfectionnisme à chaque fois qu’il s’agit d’une mission en groupe", role: "Completer-Finisher" },
+      { id: "4g", section: 4, text: "J’aime utiliser des contacts avec des personnes hors du groupe", role: "Resource Investigator" },
+      { id: "4h", section: 4, text: "Même si j’écoute l’opinion de chacun, je suis un décideur quand nécessaire", role: "Co-ordinator" },
+
+      { id: "5a", section: 5, text: "J’ai du plaisir à analyser les situations et à évaluer les différentes possibilités", role: "Monitor Evaluator" },
+      { id: "5b", section: 5, text: "Je trouve intéressant de réfléchir à des solutions pratiques aux problèmes", role: "Implementer" },
+      { id: "5c", section: 5, text: "Je sens que j’apporte ma contribution à une bonne ambiance de travail", role: "Teamworker" },
+      { id: "5d", section: 5, text: "Je peux influencer fortement le processus de décision", role: "Co-ordinator" },
+      { id: "5e", section: 5, text: "Je peux peut-être rencontrer des personnes qui apportent de nouvelles idées", role: "Resource Investigator" },
+      { id: "5f", section: 5, text: "Je peux convaincre les gens de la nécessité de passer à l’action", role: "Shaper" },
+      { id: "5g", section: 5, text: "Je me sens dans mon élément quand je peux me concentrer sur une tâche bien déterminée", role: "Specialist" },
+      { id: "5h", section: 5, text: "J’aime un lieu de travail qui exalte mon imagination", role: "Plant" },
+
+      { id: "6a", section: 6, text: "Je me retire plutôt dans un petit coin pour réfléchir à la manière d’aborder les choses", role: "Plant" },
+      { id: "6b", section: 6, text: "Je serais prêt à collaborer avec la personne qui fait preuve de l’approche la plus positive", role: "Teamworker" },
+      { id: "6c", section: 6, text: "Je chercherais une façon de rendre le travail moins fastidieux en attribuant à chacun une tâche qui lui conviendrait", role: "Co-ordinator" },
+      { id: "6d", section: 6, text: "Mon instinct pour le travail d’urgence me permettrait de m’assurer que nous ne serions pas en retard", role: "Shaper" },
+      { id: "6e", section: 6, text: "Je garderai la tête froide et continuerai à penser logiquement", role: "Monitor Evaluator" },
+      { id: "6f", section: 6, text: "J’irai droit au but sans me laisser pousser", role: "Shaper" },
+      { id: "6g", section: 6, text: "Je serais prêt à prendre le devant si je sentais que le groupe ne faisait pas de progrès", role: "Shaper" },
+      { id: "6h", section: 6, text: "J’entamerais directement la discussion pour stimuler de nouvelles idées", role: "Resource Investigator" },
+
+      { id: "7a", section: 7, text: "J’ai tendance à réagir avec impatience envers des personnes qui empêchent les choses d’avancer", role: "Shaper" },
+      { id: "7b", section: 7, text: "Les autres me critiquent parce que je suis trop analytique et pas assez intuitif", role: "Monitor Evaluator" },
+      { id: "7c", section: 7, text: "Mon souci de la précision ralentit parfois les choses", role: "Completer-Finisher" },
+      { id: "7d", section: 7, text: "Je m’ennuie assez rapidement, j’ai besoin du stimulus d’autres membres pour être enthousiaste", role: "Plant" },
+      { id: "7e", section: 7, text: "Je trouve difficile de me mettre en route, sauf si je connais précisément l’objectif", role: "Implementer" },
+      { id: "7f", section: 7, text: "J’ai parfois des difficultés à exprimer clairement les questions compliquées", role: "Specialist" },
+      { id: "7g", section: 7, text: "Parfois, je n’ose pas demander aux autres des choses que je ne sais pas faire moi-même", role: "Teamworker" },
+      { id: "7h", section: 7, text: "J’ai des difficultés à défendre mon point de vue quand je rencontre de l’opposition manifeste", role: "Teamworker" }
+    ];
+
+    const sectionTitles = {
+      1: "1. Que pensez-vous pouvoir apporter à une équipe ?",
+      2: "2. Si vous avez un défaut dans le travail d'équipe, ce pourrait être :",
+      3: "3. En équipe avec d'autres personnes sur un projet :",
+      4: "4. Votre approche caractéristique du travail en groupe est que :",
+      5: "5. Vous tirez de la satisfaction de votre travail parce que :",
+      6: "6. Si l'on vous confie soudainement une tâche difficile avec un délai court :",
+      7: "7. Face aux problèmes rencontrés en travaillant en groupe :"
+    };
+
+    const sectionThemes = {
+      1: { border: "border-indigo-300", headerBg: "bg-indigo-50 border-indigo-200", titleText: "text-indigo-900", badge: "bg-indigo-100 text-indigo-800", focusRing: "focus:ring-indigo-500" },
+      2: { border: "border-sky-300", headerBg: "bg-sky-50 border-sky-200", titleText: "text-sky-900", badge: "bg-sky-100 text-sky-800", focusRing: "focus:ring-sky-500" },
+      3: { border: "border-emerald-300", headerBg: "bg-emerald-50 border-emerald-200", titleText: "text-emerald-900", badge: "bg-emerald-100 text-emerald-800", focusRing: "focus:ring-emerald-500" },
+      4: { border: "border-amber-300", headerBg: "bg-amber-50 border-amber-200", titleText: "text-amber-900", badge: "bg-amber-100 text-amber-800", focusRing: "focus:ring-amber-500" },
+      5: { border: "border-rose-300", headerBg: "bg-rose-50 border-rose-200", titleText: "text-rose-900", badge: "bg-rose-100 text-rose-800", focusRing: "focus:ring-rose-500" },
+      6: { border: "border-purple-300", headerBg: "bg-purple-50 border-purple-200", titleText: "text-purple-900", badge: "bg-purple-100 text-purple-800", focusRing: "focus:ring-purple-500" },
+      7: { border: "border-teal-300", headerBg: "bg-teal-50 border-teal-200", titleText: "text-teal-900", badge: "bg-teal-100 text-teal-800", focusRing: "focus:ring-teal-500" }
+    };
+
+    function parseInputValue(val) {
+      if (!val || val.trim() === "") return 0;
+      const num = parseInt(val, 10);
+      if (isNaN(num) || num < 0) return 0;
+      if (num > 10) return 10;
+      return num;
+    }
+
+    // Render Questionnaire UI
+    const container = document.getElementById('sectionsContainer');
+    for (let s = 1; s <= 7; s++) {
+      const theme = sectionThemes[s];
+      const sectionQuestions = questions.filter(q => q.section === s);
+      const sectionEl = document.createElement('div');
+      sectionEl.className = `bg-white rounded-2xl shadow-sm border-2 ${theme.border} overflow-hidden transition-all duration-200`;
+      
+      let itemsHtml = sectionQuestions.map((q, idx) => `
+        <div class="flex items-center justify-between gap-4 p-3.5 ${idx % 2 === 0 ? 'bg-white' : 'bg-slate-50/70'} hover:bg-slate-100/60 transition">
+          <label for="input_${q.id}" class="text-sm text-slate-700 flex-1 leading-relaxed cursor-pointer select-none">
+            <span class="font-bold text-slate-400 mr-2 border border-slate-200 bg-slate-50 px-2 py-0.5 rounded-md text-xs">${q.id}</span> ${q.text}
+          </label>
+          <div class="flex items-center gap-1">
+            <input type="number" id="input_${q.id}" data-section="${s}" data-role="${q.role}" min="0" max="10" placeholder="0" value="0"
+              class="score-input w-16 text-center border border-slate-300 rounded-xl py-1.5 text-sm font-extrabold text-slate-800 ${theme.focusRing} focus:ring-2 focus:outline-none transition">
+            <span class="text-xs text-slate-400 font-medium">/10</span>
+          </div>
+        </div>
+      `).join('');
+
+      sectionEl.innerHTML = `
+        <div class="px-6 py-4 border-b ${theme.headerBg} flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div>
+            <span class="inline-block px-2.5 py-0.5 text-xs font-bold uppercase rounded-full ${theme.badge} mb-1">Section ${s} sur 7</span>
+            <h3 class="text-base md:text-lg font-bold ${theme.titleText}">${sectionTitles[s]}</h3>
+          </div>
+          <div class="self-start sm:self-center text-sm font-extrabold px-3.5 py-1.5 rounded-full bg-slate-100 text-slate-700 border border-slate-200 shadow-sm transition" id="badge_sec_${s}">
+            Total section : <span id="sum_sec_${s}">0</span> / 80 pts
+          </div>
+        </div>
+        <div class="divide-y divide-slate-100">${itemsHtml}</div>
+      `;
+      container.appendChild(sectionEl);
+    }
+
+    function updateSectionSum(sec) {
+      const inputs = document.querySelectorAll(`.score-input[data-section="${sec}"]`);
+      let sum = 0;
+      inputs.forEach(input => {
+        sum += parseInputValue(input.value);
+      });
+      document.getElementById(`sum_sec_${sec}`).innerText = sum;
+    }
+
+    document.querySelectorAll('.score-input').forEach(input => {
+      input.addEventListener('input', () => {
+        if (input.value !== "" && parseInt(input.value, 10) > 10) {
+          input.value = 10;
+        }
+        const sec = input.getAttribute('data-section');
+        updateSectionSum(sec);
+      });
+    });
+
+    // Chart Instances
+    let radarChartInstance = null;
+    let barChartInstance = null;
+    let histogramChartInstance = null;
+
+    document.getElementById('belbinForm').addEventListener('submit', (e) => {
+      e.preventDefault();
+
+      const roleScores = {
+        'Plant': 0,
+        'Resource Investigator': 0,
+        'Co-ordinator': 0,
+        'Shaper': 0,
+        'Monitor Evaluator': 0,
+        'Teamworker': 0,
+        'Implementer': 0,
+        'Completer-Finisher': 0,
+        'Specialist': 0
+      };
+
+      const histogramCounts = {
+        '0-2': 0,
+        '3-4': 0,
+        '5-6': 0,
+        '7-8': 0,
+        '9-10': 0
+      };
+
+      document.querySelectorAll('.score-input').forEach(input => {
+        const role = input.getAttribute('data-role');
+        const val = parseInputValue(input.value);
+
+        // Accumulate Role Score
+        if (roleScores.hasOwnProperty(role)) {
+          roleScores[role] += val;
+        }
+
+        // Accumulate Histogram Interval
+        if (val <= 2) histogramCounts['0-2']++;
+        else if (val <= 4) histogramCounts['3-4']++;
+        else if (val <= 6) histogramCounts['5-6']++;
+        else if (val <= 8) histogramCounts['7-8']++;
+        else histogramCounts['9-10']++;
+      });
+
+      displayResults(roleScores, histogramCounts);
+    });
+
+    function displayResults(scores, histogramCounts) {
+      const resultsCard = document.getElementById('resultsCard');
+      resultsCard.classList.remove('hidden');
+
+      // Sort Roles Descending
+      const sorted = Object.entries(scores).sort((a, b) => b[1] - a[1]);
+
+      // 1. Render Top 3 Dominant Roles
+      const topContainer = document.getElementById('topRolesContainer');
+      topContainer.innerHTML = '';
+      for (let i = 0; i < 3; i++) {
+        const [role, score] = sorted[i];
+        topContainer.innerHTML += `
+          <div class="bg-indigo-50/80 border border-indigo-200 rounded-xl p-5 text-center shadow-sm">
+            <div class="text-xs uppercase font-extrabold tracking-wider text-indigo-500 mb-1">Rôle Dominant N°${i + 1}</div>
+            <div class="text-lg font-extrabold text-slate-800">${role}</div>
+            <div class="text-3xl font-black text-indigo-600 mt-1">${score} <span class="text-xs font-normal text-slate-500">pts</span></div>
+          </div>
+        `;
+      }
+
+      // 2. Render Full Ordered Table
+      const tableBody = document.getElementById('scoresTableBody');
+      tableBody.innerHTML = sorted.map(([role, score], idx) => `
+        <tr class="${idx % 2 === 0 ? 'bg-white' : 'bg-slate-50'} border-b border-slate-100">
+          <td class="p-3 font-extrabold text-slate-400 text-center">${idx + 1}</td>
+          <td class="p-3 font-medium text-slate-800">${role}</td>
+          <td class="p-3 font-extrabold text-indigo-600 text-right">${score} pts</td>
+        </tr>
+      `).join('');
+
+      // 3. Render Radar & Bar Charts (Max 80, Step 10)
+      if (radarChartInstance) radarChartInstance.destroy();
+      if (barChartInstance) barChartInstance.destroy();
+
+      const radarLabels = Object.keys(scores);
+      const radarData = Object.values(scores);
+
+      // Radar Chart (Web Chart)
+      const ctxRadar = document.getElementById('radarChart').getContext('2d');
+      radarChartInstance = new Chart(ctxRadar, {
+        type: 'radar',
+        data: {
+          labels: radarLabels,
+          datasets: [{
+            label: 'Profil Belbin',
+            data: radarData,
+            backgroundColor: 'rgba(79, 70, 229, 0.25)',
+            borderColor: 'rgba(79, 70, 229, 1)',
+            borderWidth: 3,
+            pointBackgroundColor: 'rgba(79, 70, 229, 1)',
+            pointBorderColor: '#fff',
+            pointHoverBackgroundColor: '#fff',
+            pointHoverBorderColor: 'rgba(79, 70, 229, 1)',
+            pointRadius: 5,
+            pointHoverRadius: 7
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            title: { display: true, text: 'Profil Radar Belbin', font: { size: 16, weight: 'bold' }, color: '#1e293b' }
+          },
+          scales: {
+            r: {
+              min: 0,
+              max: 80,
+              ticks: {
+                stepSize: 10,
+                font: { size: 11 },
+                backdropColor: 'transparent',
+                color: '#64748b'
+              },
+              angleLines: { color: 'rgba(203, 213, 225, 0.8)' },
+              grid: { color: 'rgba(203, 213, 225, 0.8)' },
+              pointLabels: { font: { size: 12, weight: 'bold' }, color: '#334155' }
+            }
+          }
+        }
+      });
+
+      // Bar Chart
+      const barLabels = sorted.map(item => item[0]);
+      const barData = sorted.map(item => item[1]);
+
+      const ctxBar = document.getElementById('barChart').getContext('2d');
+      barChartInstance = new Chart(ctxBar, {
+        type: 'bar',
+        data: {
+          labels: barLabels,
+          datasets: [{
+            label: 'Score Total',
+            data: barData,
+            backgroundColor: 'rgba(79, 70, 229, 0.85)',
+            borderColor: 'rgba(67, 56, 202, 1)',
+            borderWidth: 1,
+            borderRadius: 8
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            title: { display: true, text: 'Répartition Classeur des Rôles', font: { size: 16, weight: 'bold' }, color: '#1e293b' }
+          },
+          scales: {
+            y: {
+              min: 0,
+              max: 80,
+              grid: { color: 'rgba(226, 232, 240, 0.8)' },
+              ticks: {
+                stepSize: 10,
+                font: { size: 12 },
+                color: '#64748b'
+              }
+            },
+            x: {
+              grid: { display: false },
+              ticks: { font: { size: 12, weight: '600' }, color: '#334155', maxRotation: 45, minRotation: 25 }
+            }
+          }
+        }
+      });
+
+      // 4. Render Histogram Table & Chart (Placed UNDER webchart and barchart)
+      const histoTableBody = document.getElementById('histogramTableBody');
+      histoTableBody.innerHTML = Object.entries(histogramCounts).map(([interval, count], idx) => `
+        <tr class="${idx % 2 === 0 ? 'bg-white' : 'bg-slate-50'} border-b border-slate-100">
+          <td class="p-2.5 font-semibold text-slate-700">${interval}</td>
+          <td class="p-2.5 font-bold text-indigo-600 text-right">${count}</td>
+        </tr>
+      `).join('');
+
+      if (histogramChartInstance) histogramChartInstance.destroy();
+      const ctxHisto = document.getElementById('histogramChart').getContext('2d');
+      histogramChartInstance = new Chart(ctxHisto, {
+        type: 'bar',
+        data: {
+          labels: Object.keys(histogramCounts),
+          datasets: [{
+            label: "Nombre d'items",
+            data: Object.values(histogramCounts),
+            backgroundColor: 'rgba(99, 102, 241, 0.85)',
+            borderColor: 'rgba(79, 70, 229, 1)',
+            borderWidth: 1,
+            borderRadius: 6
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: {
+            y: {
+              beginAtZero: true,
+              ticks: { precision: 0, font: { size: 11 } },
+              grid: { color: 'rgba(226, 232, 240, 0.8)' }
+            },
+            x: {
+              grid: { display: false },
+              ticks: { font: { size: 11, weight: '600' } }
+            }
+          }
+        }
+      });
+
+      resultsCard.scrollIntoView({ behavior: 'smooth' });
+    }
+  </script>
+</body>
+</html>
