@@ -41,6 +41,7 @@
     <div id="resultsCard" class="hidden bg-white rounded-2xl shadow-xl border border-slate-200/80 p-6 md:p-8 mt-14 space-y-10">
       <div class="border-b border-slate-200 pb-4 flex justify-between items-center flex-wrap gap-2">
         <h2 class="text-2xl font-extrabold text-slate-900">Votre Profil d'Équipe Belbin</h2>
+        <span class="text-xs bg-indigo-100 text-indigo-700 font-bold px-3 py-1 rounded-full">Calculé en direct</span>
       </div>
 
       <!-- 1. Top Roles Highlights -->
@@ -87,7 +88,7 @@
 
       <!-- 4. Histogram — Répartition des scores (items) (Placed under Bar Chart and Radar) -->
       <div class="space-y-4 pt-6 border-t border-slate-200">
-        <h3 class="text-base font-bold text-slate-800">Histogramme — Répartition des scores</h3>
+        <h3 class="text-base font-bold text-slate-800">Histogramme — Répartition des scores (items)</h3>
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6 items-center">
           <div class="overflow-x-auto rounded-xl border border-slate-200">
             <table class="w-full text-left border-collapse text-sm">
@@ -180,7 +181,7 @@
       { id: "6d", section: 6, text: "Mon instinct pour le travail d’urgence me permettrait de m’assurer que nous ne serions pas en retard", role: "Shaper" },
       { id: "6e", section: 6, text: "Je garderai la tête froide et continuerai à penser logiquement", role: "Monitor Evaluator" },
       { id: "6f", section: 6, text: "J’irai droit au but sans me laisser pousser", role: "Shaper" },
-      { id: "6g", section: 6, text: "Je serais prêt à prendre le devant si je sentais que le groupe ne faisait pas de progrès", role: "Shaper" },
+      { id: "6g", section: 6, text: "Je serais prêt à prendre le devant si je sentais que le groupe ne faisant pas de progrès", role: "Shaper" },
       { id: "6h", section: 6, text: "J’entamerais directement la discussion pour stimuler de nouvelles idées", role: "Resource Investigator" },
 
       { id: "7a", section: 7, text: "J’ai tendance à réagir avec impatience envers des personnes qui empêchent les choses d’avancer", role: "Shaper" },
@@ -235,7 +236,7 @@
             <span class="font-bold text-slate-400 mr-2 border border-slate-200 bg-slate-50 px-2 py-0.5 rounded-md text-xs">${q.id}</span> ${q.text}
           </label>
           <div class="flex items-center gap-1">
-            <input type="number" id="input_${q.id}" data-section="${s}" data-role="${q.role}" min="0" max="10" placeholder="0" value="0"
+            <input type="number" id="input_${q.id}" data-section="${s}" data-role="${q.role}" min="0" max="10" placeholder="0" value=""
               class="score-input w-16 text-center border border-slate-300 rounded-xl py-1.5 text-sm font-extrabold text-slate-800 ${theme.focusRing} focus:ring-2 focus:outline-none transition">
             <span class="text-xs text-slate-400 font-medium">/10</span>
           </div>
@@ -387,7 +388,7 @@
           maintainAspectRatio: false,
           plugins: {
             legend: { display: false },
-            title: { display: true, text: 'Profil Radar Belbin', font: { size: 16, weight: 'bold' }, color: '#1e293b' }
+            title: { display: true, text: 'Profil Radar Belbin (0 - 80 pts)', font: { size: 16, weight: 'bold' }, color: '#1e293b' }
           },
           scales: {
             r: {
@@ -430,7 +431,7 @@
           maintainAspectRatio: false,
           plugins: {
             legend: { display: false },
-            title: { display: true, text: 'Répartition Classeur des Rôles', font: { size: 16, weight: 'bold' }, color: '#1e293b' }
+            title: { display: true, text: 'Répartition Classeur des Rôles (Du plus fort au plus faible)', font: { size: 16, weight: 'bold' }, color: '#1e293b' }
           },
           scales: {
             y: {
@@ -451,7 +452,7 @@
         }
       });
 
-      // 4. Render Histogram Table & Chart (Placed UNDER webchart and barchart)
+      // 4. Render Histogram Table & Chart
       const histoTableBody = document.getElementById('histogramTableBody');
       histoTableBody.innerHTML = Object.entries(histogramCounts).map(([interval, count], idx) => `
         <tr class="${idx % 2 === 0 ? 'bg-white' : 'bg-slate-50'} border-b border-slate-100">
